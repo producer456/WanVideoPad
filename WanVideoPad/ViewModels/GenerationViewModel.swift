@@ -22,8 +22,40 @@ class GenerationViewModel: ObservableObject {
     @Published var guidance: Float = 5.0
     @Published var seed: String = ""
 
+    // Download state
+    @Published var isDownloading: Bool = false
+    @Published var downloadProgress: Float = 0.0
+    @Published var downloadStatus: String = ""
+    @Published var currentDownloadFile: String = ""
+
     var modelsReady: Bool {
         WeightLoader.allModelsDownloaded()
+    }
+
+    func downloadModels() {
+        guard !isDownloading else { return }
+        isDownloading = true
+        downloadProgress = 0
+        downloadStatus = "Starting download..."
+        errorMessage = nil
+
+        Task {
+            do {
+                for file in WeightLoader.ModelFile.allCases {
+                    self.currentDownloadFile = file.rawValue
+                    self.downloadStatus = "Downloading \(file.rawValue)..."
+                    try await WeightLoader.download(file)
+                    self.downloadProgress = Float(WeightLoader.ModelFile.allCases.firstIndex(of: file)! + 1) / Float(WeightLoader.ModelFile.allCases.count)
+                }
+                self.isDownloading = false
+                self.downloadStatus = "All models downloaded!"
+                self.objectWillChange.send()
+            } catch {
+                self.isDownloading = false
+                self.errorMessage = "Download failed: \(error.localizedDescription)"
+                self.downloadStatus = "Failed"
+            }
+        }
     }
 
     func generate() {

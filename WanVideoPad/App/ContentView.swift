@@ -82,14 +82,32 @@ struct ContentView: View {
                     .disabled(viewModel.isGenerating || !viewModel.modelsReady)
                 }
 
-                // Model status
+                // Model download
                 if !viewModel.modelsReady {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle")
-                        Text("Models not found. Copy converted weights to App Support/WanVideoPad/models/")
-                            .font(.caption)
+                    if viewModel.isDownloading {
+                        VStack(spacing: 8) {
+                            ProgressView(value: viewModel.downloadProgress)
+                                .tint(.blue)
+                            Text(viewModel.downloadStatus)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Button {
+                            viewModel.downloadModels()
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.down.circle.fill")
+                                Text("Download Models (~14 GB)")
+                            }
+                            .font(.subheadline)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(.blue)
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
+                        }
                     }
-                    .foregroundStyle(.orange)
                 }
             }
             .padding()
